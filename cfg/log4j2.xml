@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+    <Appenders>
+        <RollingFile name="RollingFile" fileName="logs/scrap-world.log"
+                     filePattern="logs/scrap-world.%i.log">
+            <PatternLayout pattern="%d [%10.10t] %-7level - %msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+	</Appenders>
+
+    <Loggers>
+        <Root level="trace">
+            <AppenderRef ref="RollingFile" level="debug"/>
+        </Root>
+        <logger name="com.zaxxer.hikari" level="info"/>
+        <logger name="org.apache.logging" level="info"/>
+    </Loggers>
+</Configuration>
