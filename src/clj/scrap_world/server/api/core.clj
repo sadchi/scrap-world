@@ -16,29 +16,29 @@
 (defn generate-resource-name [initial-name & {:keys [root skip-cache]}]
   (if skip-cache
     initial-name
-    (let [res-path (str (or root "public/js") "/" initial-name)
-          _ (log/debug "Res path:" res-path)
+    (let [res-path      (str (or root "public/js") "/" initial-name)
+          _             (log/debug "Res path:" res-path)
           resource-file (io/input-stream (io/resource res-path))
-          _ (log/debug "Res file:" resource-file)
-          hash-str (md5 resource-file)
-          _ (log/debug "resource: " initial-name " md5:" hash-str)
+          _             (log/debug "Res file:" resource-file)
+          hash-str      (md5 resource-file)
+          _             (log/debug "resource: " initial-name " md5:" hash-str)
           ]
       (str resource-prefix "/app_" hash-str ".js"))))
 
 (defn get-js-resource [res _]
   (log/debug "Trying to get resources " res)
   (let [res-processed (s/replace res #"_[\d\w]+.js" ".js")
-        _ (log/debug "processed resource name" res-processed)
-        resp (assoc-in
-               (response/resource-response (str "public/js/" res-processed))
-               [:headers "Cache-Control"] "max-age=100500")
-        _ (log/debug "response " (str resp))]
+        _             (log/debug "processed resource name" res-processed)
+        resp          (assoc-in
+                        (response/resource-response (str "public/js/" res-processed))
+                        [:headers "Cache-Control"] "max-age=100500")
+        _             (log/debug "response " (str resp))]
     resp))
 
 (defn all-routes [cfg]
   (apply c/routes
          (into (list
-                 (c/GET "/" [] (fn []
+                 (c/GET "/" [] (fn [_]
                                  {:status  200
                                   :headers {"Content-type" "text/html"}
                                   :body    (h/html5

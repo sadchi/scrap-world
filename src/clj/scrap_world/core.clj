@@ -2,7 +2,7 @@
   (:require
     [clojure.edn :as edn]
     [clojure.java.io :as io]
-    [clojure.tools.cli :refer [parse-opts]]
+    [clojure.tools.cli :as cli]
     [clojure.tools.logging :as log]
     [scrap-world.server.core :as server]
     )
@@ -22,7 +22,7 @@
   "I don't do a whole lot ... yet."
   [& args]
   (log/debug (apply str (repeat 120 "*")))
-  (let [cli-opts (parse-opts args cli-options)
+  (let [cli-opts (cli/parse-opts args cli-options)
         config-path (get-in cli-opts [:options :cfg])
         cfg (read-cfg config-path)]
     (log/debug "Starting with cfg: " cfg)

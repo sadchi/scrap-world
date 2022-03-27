@@ -11,6 +11,7 @@
                  [garden "1.3.10"]
                  [hiccup "1.0.5"]
                  [http-kit "2.5.3"]
+                 [instaparse "1.4.10"]
                  [jstrutz/hashids "1.0.1"]
                  [metosin/spec-tools "0.10.5"]
                  [missionary "b.26"]

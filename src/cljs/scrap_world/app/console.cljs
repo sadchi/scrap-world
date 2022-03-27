@@ -1,9 +1,9 @@
 (ns scrap-world.app.console
   (:require
-    [garden.selectors :as s]
-    [garden.units :refer [px]]
+    [garden.units :as g]
     [reagent.core :as r]
     [scrap-world.common.core :as c]
+    [instaparse.core :as insta]
     [scrap-world.common.common-styles :as cs]
     [scrap-world.common.inputs :as i]
     ))
@@ -18,7 +18,90 @@
   (get-in params k))
 
 
+(def g' "
+res              = func | num | math-exp | math-op
+func             = func-name <'('> func-params <')'>
+func-name        = 'max' | 'min' | 'abs' | 'eq' | 'neq' | 'contains' | 'ncontains'
+func-params      = func-param | (func-param <' '*','' '*>)+ func-param
+func-param       = num | math-exp | math-op | func | str | var
+math-exp         = <'('> math-op <')'>
+math-op          = math-op-var math-sign math-op-var
+<math-op-var>    = num | var | func | math-exp | math-op
+math-sign        = <' '*> math-s <' '*>
+<math-s>         = '*' | '+' | '-' | '/'
+num              = #'[+-]?([0-9]*[.])?[0-9]+'
+str              = <'\"'> #'[^\"]*' <'\"'>
+var              = 'x'
+")
 
+(def g "
+
+")
+
+(defonce parser (insta/parser g))
+
+(def pre-transform {:num        (fn [& args]
+                                  [:num (apply str args)])
+                    :str        (fn [& args]
+                                  [:str (apply str args)])
+                    :var        (fn [& _] [:var])
+                    :func-name  identity
+                    :func-param identity
+                    :math-sign  identity
+                    :math-exp   identity})
+
+
+(defn str->float [x]
+  (js/parseFloat x))
+
+
+(def post-transform {:num         (fn [x]
+                                    (fn [_] (str->float x)))
+                     :str         (fn [x]
+                                    (fn [_] x))
+                     :var         (fn [& _]
+                                    (fn [v] v))
+
+                     :math-op     (fn [x1 sign x2]
+                                    (fn [v] ((case sign
+                                               "+" +
+                                               "-" -
+                                               "*" *
+                                               "/" /
+                                               identity) (x1 v) (x2 v))))
+                     :func-params (fn [& args]
+                                    (fn [v]
+                                      (map (fn [x] (x v)) args)))
+                     :func        (fn [f-name params]
+                                    (let [f (case f-name
+                                              "abs" (fn [x] (max x (- x)))
+                                              "max" max
+                                              "min" min
+                                              "eq" (fn [& [x y :as args]]
+                                                     (c/log "@@@@@ eq " (apply str args))
+                                                     (if (= x y)
+                                                       1
+                                                       0))
+                                              "neq" (fn [& [x y :as args]]
+                                                      (c/log "@@@@@ eq " (apply str args))
+                                                      (if (= x y)
+                                                        0
+                                                        1))
+                                              "contains" (fn [& [x y :as args]]
+                                                           (c/log "@@@@@ eq " (apply str args))
+                                                           (if (str/includes? x y)
+                                                             1
+                                                             0))
+                                              "ncontains" (fn [& [x y :as args]]
+                                                            (c/log "@@@@@ eq " (apply str args))
+                                                            (if (str/includes? x y)
+                                                              0
+                                                              1))
+                                              )]
+                                      (fn [v]
+                                        (apply f (params v)))))
+                     :res         (fn [x]
+                                    (fn [v] (x v)))})
 
 
 (def console-pane ^:css [cs/flex-box
@@ -35,7 +118,7 @@
                           :flex-direction "column"
                           }])
 
-(def console-pane--hidden ^:css {:top (px -40000)})
+(def console-pane--hidden ^:css {:top (g/px -40000)})
 
 (def console-pane__logs ^:css {:flex-grow 1
                                :position  "relative"})
