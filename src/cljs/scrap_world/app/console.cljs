@@ -35,7 +35,14 @@ var              = 'x'
 ")
 
 (def g "
+res             = per-cmd-help | generic-help | cmd
 
+generic-help    = <help-w>
+per-cmd-help    = <help-w> cmd-name
+cmd-name        = #'\w+'
+keyword         = #':\w+'
+str-params      = <'\"'> #'[^\"]*' <'\"'>
+<help-w>        = 'help'
 ")
 
 (defonce parser (insta/parser g))
