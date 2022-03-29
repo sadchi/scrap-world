@@ -1,9 +1,12 @@
 (ns scrap-world.app.console
   (:require
+    [cljs-time.core :as t]
+    [cljs-time.format :as tf]
     [garden.units :as g]
     [reagent.core :as r]
     [scrap-world.common.core :as c]
     [instaparse.core :as insta]
+    [instaparse.failure :as fail]
     [scrap-world.common.common-styles :as cs]
     [scrap-world.common.inputs :as i]
     ))
@@ -11,6 +14,7 @@
 (def params
   {::log-depth     100
    ::history-depth 30
+   ::logs-depth    30
 
    ::background    "rgba(255,255,255,0.4);"})
 
@@ -36,12 +40,15 @@ var              = 'x'
 
 (def g "
 res             = per-cmd-help | generic-help | cmd
-
 generic-help    = <help-w>
-per-cmd-help    = <help-w> cmd-name
-cmd-name        = #'\w+'
-keyword         = #':\w+'
-str-params      = <'\"'> #'[^\"]*' <'\"'>
+per-cmd-help    = <help-w> <space> cmd-name
+cmd             = cmd-name (<space> param)+
+param           = keyword <space> (str-val | simple-val)
+cmd-name        = #'[a-zA-Z0-9-_.]+'
+keyword         = #':[a-zA-Z0-9-_.]+'
+simple-val      = #'[a-zA-Z0-9-_.]+'
+str-val         = <'\"'> #'[^\"]*' <'\"'>
+<space>         = ' '+
 <help-w>        = 'help'
 ")
 
@@ -96,14 +103,14 @@ str-params      = <'\"'> #'[^\"]*' <'\"'>
                                                         1))
                                               "contains" (fn [& [x y :as args]]
                                                            (c/log "@@@@@ eq " (apply str args))
-                                                           (if (str/includes? x y)
-                                                             1
-                                                             0))
+                                                           #_(if (str/includes? x y)
+                                                               1
+                                                               0))
                                               "ncontains" (fn [& [x y :as args]]
                                                             (c/log "@@@@@ eq " (apply str args))
-                                                            (if (str/includes? x y)
-                                                              0
-                                                              1))
+                                                            #_(if (str/includes? x y)
+                                                                0
+                                                                1))
                                               )]
                                       (fn [v]
                                         (apply f (params v)))))
@@ -118,7 +125,7 @@ str-params      = <'\"'> #'[^\"]*' <'\"'>
                           :right          0
                           :height         "75%"
                           :background     (::background params)
-                          :border-width   "1 0 1 0"
+                          :border-width   "1px 0 1px 0"
                           :border-style   "solid"
                           :border-color   "rgba(0,0,0,0.2);"
                           :box-sizing     "border-box"
@@ -127,13 +134,28 @@ str-params      = <'\"'> #'[^\"]*' <'\"'>
 
 (def console-pane--hidden ^:css {:top (g/px -40000)})
 
-(def console-pane__logs ^:css {:flex-grow 1
-                               :position  "relative"})
+(def console-pane__logs ^:css [cs/mono-font
+                               {:font-size (g/px 14)
+                                :flex-grow 1
+                                :position  "relative"}])
 
-(def console-pane__logs__content)
+(def console-pane__logs__container ^:css {:position   "absolute"
+                                          :left       0
+                                          :right      0
+                                          :top        0
+                                          :bottom     0
+                                          :overflow-y "scroll"})
+
+(def console-pane__logs__container__inner ^:css [cs/flex-box
+                                                 {:flex-direction  "column"
+                                                  :justify-content "flex-end"}])
+
+
 
 (def console-pane__input ^:css {:flex-shrink   0
                                 :margin-bottom "8px"})
+
+
 
 (def console-opened? (r/atom false))
 (def cmd-buffer (r/atom ""))
@@ -144,13 +166,43 @@ str-params      = <'\"'> #'[^\"]*' <'\"'>
 (defn change-console-state []
   (c/log "change-console-state: " (swap! console-opened? not)))
 
+
+
+(defn add-console-log [log]
+  (swap! log-stack (fn [x] (take (v ::logs-depth) (conj x log)))))
+
+
+(def custom-formatter (tf/formatter "yyyyMMdd HH:mm:ss"))
+
 (defn run-cmd [cmd]
-  )
+  (c/log "run-cmd cmd: " cmd)
+  (let [cmd-parsed (parser cmd)]
+
+    (if (insta/failure? cmd-parsed)
+      (let [{:keys [line column text reason]} cmd-parsed]
+        (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                          ::color     :bad
+                          ::content   [(str "Parse error at line " line ", column " column ":") text
+                                       (when (integer? column)
+                                         (if (<= column 1) "^"
+                                                           (apply str (concat (repeat (dec column) "\u00a0") [\^]))))
+                                       (apply str reason)]
+                          }))
+      (c/log "run-cmd parsed-cmd: " cmd-parsed))))
+
+(defn console-logs []
+  [:div (c/cls 'console-pane__logs)
+   [:div (c/cls 'console-pane__logs__container)
+    [:div (c/cls 'console-pane__logs__container__inner)
+     (doall (for [item (reverse @log-stack)
+                  :let [{::keys [timestamp color content]} item]]
+              (for [[idx x] (map-indexed vector content)]
+                ^{:key idx} [:div x])))]]])
 
 (defn console []
   [:div (c/cls 'console-pane
                (when-not @console-opened? 'console-pane--hidden))
-   [:div (c/cls 'console-pane__logs) "ha ha"]
+   [console-logs]
    [:div (c/cls 'console-pane__input
                 :on-key-down (fn [e]
                                (condp = (.-which e)
@@ -160,9 +212,9 @@ str-params      = <'\"'> #'[^\"]*' <'\"'>
                                                  #(let [cmd @cmd-buffer]
                                                     (swap! cmd-history (fn [x] (if (= cmd (first x))
                                                                                  x
-                                                                                 (->> (conj x cmd)
-                                                                                      (take (v ::history-depth))))))
-                                                    (run-cmd cmd)) 50)
+                                                                                 (take (v ::history-depth) (conj x cmd)))))
+                                                    (reset! cmd-buffer "")
+                                                    (run-cmd cmd)) 100)
                                  nil)))
     [i/input :100 "" (fn []) :autofocus-a console-opened? :external-val-a cmd-buffer]]])
 
