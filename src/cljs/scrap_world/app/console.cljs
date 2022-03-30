@@ -16,7 +16,7 @@
   {::log-depth         100
    ::history-depth     30
    ::logs-depth        30
-   ::timestamp-padding 170
+   ::timestamp-padding 190
    ::generic-padding   16
    ::background        "#9E9E9E"
    ::colors            {::bad     "#B00020"
@@ -34,7 +34,7 @@ per-cmd-help    = <help-w> <space> cmd-name
 cmd             = cmd-name (<space> param)+
 param           = keyword <space> (str-val | simple-val)
 cmd-name        = #'[a-zA-Z0-9-_.]+'
-keyword         = #':[a-zA-Z0-9-_.]+'
+keyword         = <':'>#'[a-zA-Z0-9-_.]+'
 simple-val      = #'[a-zA-Z0-9-_.]+'
 str-val         = <'\"'> #'[^\"]*' <'\"'>
 <space>         = ' '+
@@ -43,68 +43,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 
 (defonce parser (insta/parser g))
 
-(def pre-transform {:num        (fn [& args]
-                                  [:num (apply str args)])
-                    :str        (fn [& args]
-                                  [:str (apply str args)])
-                    :var        (fn [& _] [:var])
-                    :func-name  identity
-                    :func-param identity
-                    :math-sign  identity
-                    :math-exp   identity})
 
-
-(defn str->float [x]
-  (js/parseFloat x))
-
-
-(def post-transform {:num         (fn [x]
-                                    (fn [_] (str->float x)))
-                     :str         (fn [x]
-                                    (fn [_] x))
-                     :var         (fn [& _]
-                                    (fn [v] v))
-
-                     :math-op     (fn [x1 sign x2]
-                                    (fn [v] ((case sign
-                                               "+" +
-                                               "-" -
-                                               "*" *
-                                               "/" /
-                                               identity) (x1 v) (x2 v))))
-                     :func-params (fn [& args]
-                                    (fn [v]
-                                      (map (fn [x] (x v)) args)))
-                     :func        (fn [f-name params]
-                                    (let [f (case f-name
-                                              "abs" (fn [x] (max x (- x)))
-                                              "max" max
-                                              "min" min
-                                              "eq" (fn [& [x y :as args]]
-                                                     (c/log "@@@@@ eq " (apply str args))
-                                                     (if (= x y)
-                                                       1
-                                                       0))
-                                              "neq" (fn [& [x y :as args]]
-                                                      (c/log "@@@@@ eq " (apply str args))
-                                                      (if (= x y)
-                                                        0
-                                                        1))
-                                              "contains" (fn [& [x y :as args]]
-                                                           (c/log "@@@@@ eq " (apply str args))
-                                                           #_(if (str/includes? x y)
-                                                               1
-                                                               0))
-                                              "ncontains" (fn [& [x y :as args]]
-                                                            (c/log "@@@@@ eq " (apply str args))
-                                                            #_(if (str/includes? x y)
-                                                                0
-                                                                1))
-                                              )]
-                                      (fn [v]
-                                        (apply f (params v)))))
-                     :res         (fn [x]
-                                    (fn [v] (x v)))})
 
 
 (def console-pane ^:css [cs/flex-box
@@ -140,8 +79,9 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                                   :justify-content "flex-end"}])
 
 
-(def console-pane__logs__item ^:css {:margin-top    (g/px 8)
-                                     :margin-bottom (g/px 8)
+(def console-pane__logs__item ^:css {
+                                     ;:margin-top    (g/px 8)
+                                     ;:margin-bottom (g/px 8)
                                      :position      "relative"
                                      :padding-left  (g/px (v ::timestamp-padding))
                                      :padding-right (g/px (v ::generic-padding))})
@@ -165,17 +105,69 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 (def log-stack (r/atom (list)))
 (def cmd-history (r/atom (list)))
 
+(defn add-console-log [log]
+  (swap! log-stack (fn [x] (take (v ::logs-depth) (conj x log)))))
+
+(def custom-formatter (tf/formatter "yyyyMMdd HH:mm:ss"))
+
+(def pre-transform {:cmd-name   identity
+                    :param      (fn [& args]
+                                  args)
+                    :keyword    identity
+                    :str-val    identity
+
+                    :simple-val (fn [x]
+                                  (if (js/isNaN x)
+                                    x (js/parseFloat x)))
+                    :num        (fn [& args]
+                                  [:num (apply str args)])
+                    :str        (fn [& args]
+                                  [:str (apply str args)])
+                    })
+
+
+
+
+(def post-transform {:res          (fn [x] (fn [] (x)))
+
+                     :generic-help (fn [& _]
+                                     (fn []
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                                         ::color     :neutral
+                                                         ::content   ["Try to use: 'help <command-name>'  to get per command info"
+                                                                      "or 'refresh' to get commands list from the back end"]})))
+
+                     :per-cmd-help (fn [x]
+                                     (fn []
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                                         ::color     :neutral
+                                                         ::content   [(str "Requested help for the <" x "> command")
+                                                                      ]})))
+                     :refresh      (fn [& _]
+                                     (fn []
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                                         ::color     :neutral
+                                                         ::content   [(str "Trying to get commands list from the back end")]})))
+                     :cmd          (fn [cmd-name & params]
+                                     (fn []
+                                       (c/log "CMD cmd-name: " cmd-name)
+                                       (c/log "CMD params: " params)
+                                       (let [params-map (into {} params)
+                                             req        {:command cmd-name
+                                                         :params  params-map}]
+                                         (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                                           ::color     :good
+                                                           ::content   [(str "Executing command : " req)]}))))})
 
 (defn change-console-state []
   (c/log "change-console-state: " (swap! console-opened? not)))
 
 
 
-(defn add-console-log [log]
-  (swap! log-stack (fn [x] (take (v ::logs-depth) (conj x log)))))
 
 
-(def custom-formatter (tf/formatter "yyyyMMdd HH:mm:ss"))
+
+
 
 (defn run-cmd [cmd]
   (c/log "run-cmd cmd: " cmd)
@@ -191,7 +183,12 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                                            (apply str (concat (repeat (dec column) "\u00a0") [\^]))))
                                        (apply str reason)]
                           }))
-      (c/log "run-cmd parsed-cmd: " cmd-parsed))))
+      (let [pre-transformed (insta/transform pre-transform cmd-parsed)
+            res             (insta/transform post-transform pre-transformed)]
+
+        (c/log "run-cmd parsed-cmd: " cmd-parsed)
+        (c/log "run-cmd pre-transformed: " pre-transformed)
+        (res)))))
 
 (defn console-logs []
   (let [node (atom nil)]
@@ -211,7 +208,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                                                     (case color
                                                                       :bad 'console-pane__logs__item--bad
                                                                       :good 'console-pane__logs__item--good
-                                                                      :else 'console-pane__logs__item--neutral))
+                                                                      'console-pane__logs__item--neutral))
                                                         [:div (c/cls 'console-pane__logs__item__timestamp) timestamp]
                                                         (for [[i x] (map-indexed vector content)]
                                                           ^{:key i} [:div x])]))]]])})))
