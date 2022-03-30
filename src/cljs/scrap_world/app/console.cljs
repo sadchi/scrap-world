@@ -27,7 +27,8 @@
   (get-in params k))
 
 (def g "
-res             = per-cmd-help | generic-help | cmd
+res             = per-cmd-help | generic-help | cmd | refresh
+refresh         = <'refresh'>
 generic-help    = <help-w>
 per-cmd-help    = <help-w> <space> cmd-name
 cmd             = cmd-name (<space> param)+
