@@ -58,6 +58,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                           :border-color   "rgba(0,0,0,0.2);"
                           :box-sizing     "border-box"
                           :flex-direction "column"
+                          :box-shadow     "rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;"
                           }])
 
 (def console-pane--hidden ^:css {:top (g/px -40000)})
@@ -95,8 +96,9 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 (def console-pane__logs__item__timestamp ^:css {:position "absolute"
                                                 :left     (g/px (v ::generic-padding))})
 
-(def console-pane__input ^:css {:flex-shrink   0
-                                :margin-bottom "8px"})
+(def console-pane__input ^:css {:flex-shrink 0
+                                ;:margin-bottom "8px"
+                                })
 
 
 
@@ -132,20 +134,20 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 
                      :generic-help (fn [& _]
                                      (fn []
-                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/time-now))
                                                          ::color     :neutral
                                                          ::content   ["Try to use: 'help <command-name>'  to get per command info"
                                                                       "or 'refresh' to get commands list from the back end"]})))
 
                      :per-cmd-help (fn [x]
                                      (fn []
-                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/time-now))
                                                          ::color     :neutral
                                                          ::content   [(str "Requested help for the <" x "> command")
                                                                       ]})))
                      :refresh      (fn [& _]
                                      (fn []
-                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                       (add-console-log {::timestamp (tf/unparse custom-formatter (t/time-now))
                                                          ::color     :neutral
                                                          ::content   [(str "Trying to get commands list from the back end")]})))
                      :cmd          (fn [cmd-name & params]
@@ -155,7 +157,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                        (let [params-map (into {} params)
                                              req        {:command cmd-name
                                                          :params  params-map}]
-                                         (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+                                         (add-console-log {::timestamp (tf/unparse custom-formatter (t/time-now))
                                                            ::color     :good
                                                            ::content   [(str "Executing command : " req)]}))))})
 
@@ -175,7 +177,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 
     (if (insta/failure? cmd-parsed)
       (let [{:keys [line column text reason]} cmd-parsed]
-        (add-console-log {::timestamp (tf/unparse custom-formatter (t/now))
+        (add-console-log {::timestamp (tf/unparse custom-formatter (t/time-now))
                           ::color     :bad
                           ::content   [(str "Parse error at line " line ", column " column ":") text
                                        (when (integer? column)

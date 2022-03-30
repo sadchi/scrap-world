@@ -11,8 +11,8 @@
 
 (def params
   {::debounce-timeout 400
-   ::padding          8
-   ::height           28
+   ::padding          16
+   ::height           40
    ::width            {::s 160
                        ::m 240
                        ::l 320}
@@ -25,6 +25,9 @@
 (def text-input ^:css {:height        (px (v ::height))
                        :width         (px (v ::width ::m))
                        :box-sizing    "border-box"
+                       :outline       0
+                       :border        0
+                       :background    "rgba(255,255,255,0.5);"
                        :padding-left  (px (v ::padding))
                        :padding-right (px (v ::padding))})
 
@@ -52,14 +55,14 @@
 
 
 (defn input [size placeholder on-change-f & {:keys [id value autofocus autofocus-a external-val-a transparent]}]
-  (let [val (if-not (some? external-val-a)
-              (r/atom (str value))
-              external-val-a)
-        f (e/debounce
-            #(do
-               (c/log "debounce completed")
-               (when (some? on-change-f)
-                 (on-change-f @val))) (v ::debounce-timeout))
+  (let [val      (if-not (some? external-val-a)
+                   (r/atom (str value))
+                   external-val-a)
+        f        (e/debounce
+                   #(do
+                      (c/log "debounce completed")
+                      (when (some? on-change-f)
+                        (on-change-f @val))) (v ::debounce-timeout))
         dom-elem (atom nil)]
     (r/create-class
       {:component-did-mount (fn [x]
@@ -119,14 +122,14 @@
 
 
 (defn multiline-input [placeholder on-change-f & {:keys [id value autofocus external-val-a]}]
-  (let [val (if-not (some? external-val-a)
-              (r/atom (str value))
-              external-val-a)
-        f (e/debounce
-            #(do
-               (c/log "debounce completed")
-               (when (some? on-change-f)
-                 (on-change-f @val))) (v ::debounce-timeout))
+  (let [val      (if-not (some? external-val-a)
+                   (r/atom (str value))
+                   external-val-a)
+        f        (e/debounce
+                   #(do
+                      (c/log "debounce completed")
+                      (when (some? on-change-f)
+                        (on-change-f @val))) (v ::debounce-timeout))
         dom-elem (atom nil)]
     (r/create-class
       {:component-did-mount (fn [x]
