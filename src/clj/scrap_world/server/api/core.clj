@@ -9,6 +9,8 @@
     [pandect.algo.md5 :refer [md5]]
     [ring.util.response :as response]
     [scrap-world.server.api.v1.world :as w]
+    [scrap-world.server.api.v1.cmd.core :as cmd]
+
     ))
 
 (def resource-prefix "/res")
@@ -55,6 +57,8 @@
                  (c/GET (str resource-prefix "/:res") [res] (partial get-js-resource res))
                  (r/resources "/public")
                  (r/not-found "Not found"))
-               w/routes)
+               (concat
+                 w/routes
+                 cmd/routes))
 
          ))

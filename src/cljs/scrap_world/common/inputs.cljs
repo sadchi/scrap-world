@@ -1,7 +1,7 @@
 (ns scrap-world.common.inputs
   (:require
     [garden.selectors :as s]
-    [garden.units :refer [px]]
+    [garden.units :as g :refer [px]]
     [reagent.core :as r]
     [reagent.dom :as rd]
     [scrap-world.common.common-styles :as cs]
@@ -22,34 +22,34 @@
   (get-in params k))
 
 
-(def text-input ^:css {:height        (px (v ::height))
-                       :width         (px (v ::width ::m))
+(def text-input ^:css {:height        (g/px (v ::height))
+                       :width         (g/px (v ::width ::m))
                        :box-sizing    "border-box"
                        :outline       0
                        :border        0
                        :background    "rgba(255,255,255,0.5);"
-                       :padding-left  (px (v ::padding))
-                       :padding-right (px (v ::padding))})
+                       :padding-left  (g/px (v ::padding))
+                       :padding-right (g/px (v ::padding))})
 
 (def text-input--transparent ^:css {:background   "rgba(0,0,0,0.3);"
                                     :border-width 0})
 
-(def text-input--small ^:css {:width (px (v ::width ::s))})
-(def text-input--big ^:css {:width (px (v ::width ::l))})
+(def text-input--small ^:css {:width (g/px (v ::width ::s))})
+(def text-input--big ^:css {:width (g/px (v ::width ::l))})
 (def text-input--100 ^:css {:width "100%"})
 
 (def check-box-css ^:css {:position "relative"
                           :bottom   "-2px"})
 
-(def input-left-margin ^:css {:margin-left (px (v ::padding))})
-(def input-right-margin ^:css {:margin-right (px (v ::padding))})
+(def input-left-margin ^:css {:margin-left (g/px (v ::padding))})
+(def input-right-margin ^:css {:margin-right (g/px (v ::padding))})
 
 
 (def multiline-text-input ^:css {:height        "100%"
                                  :width         "100%"
                                  :resize        "none"
-                                 :padding-left  (px 12)
-                                 :padding-right (px 12)
+                                 :padding-left  (g/px 12)
+                                 :padding-right (g/px 12)
                                  :box-sizing    "border-box"
                                  })
 
