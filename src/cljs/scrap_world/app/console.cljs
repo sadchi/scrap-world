@@ -105,7 +105,8 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 (def console-opened? (r/atom false))
 (def cmd-buffer (r/atom ""))
 (def log-stack (r/atom (list)))
-(def cmd-history (r/atom (list)))
+(def cmd-history (atom (list)))
+(def cmd-history-pointer (atom 0))
 
 (defn add-console-log [log]
   (swap! log-stack (fn [x] (take (v ::logs-depth) (conj x log)))))
@@ -215,6 +216,15 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                                         (for [[i x] (map-indexed vector content)]
                                                           ^{:key i} [:div x])]))]]])})))
 
+
+(defn get-cmd-from-history [f]
+  (let [history-size (count @cmd-history)
+        old-cmd      (nth @cmd-history @cmd-history-pointer)]
+    (c/log "get-cmd-from-history new-pos:"
+           (swap! cmd-history-pointer (fn [x]
+                                        (rem (f (+ x history-size)) history-size))))
+    (reset! cmd-buffer old-cmd)))
+
 (defn console []
   [:div (c/cls 'console-pane
                (when-not @console-opened? 'console-pane--hidden))
@@ -224,11 +234,14 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
                                (condp = (.-which e)
                                  192 (.preventDefault e)
                                  27 (reset! cmd-buffer "")
+                                 38 (get-cmd-from-history inc)
+                                 40 (get-cmd-from-history dec)
                                  13 (.setTimeout js/window
                                                  #(let [cmd @cmd-buffer]
                                                     (swap! cmd-history (fn [x] (if (= cmd (first x))
                                                                                  x
                                                                                  (take (v ::history-depth) (conj x cmd)))))
+                                                    (reset! cmd-history-pointer 0)
                                                     (reset! cmd-buffer "")
                                                     (run-cmd cmd)) 100)
                                  nil)))
