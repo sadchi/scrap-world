@@ -1,7 +1,7 @@
 (ns scrap-world.server.api.v1.cmd.core
   (:require
     [compojure.core :as c]
-    [ring.middleware.json :refer [wrap-json-response wrap-json-body wrap-json-params]]
+    [ring.middleware.json :refer [wrap-json-response]]
     [ring.util.response :as r]
     [scrap-world.reference.api.v1.cmd :as ref]
     ))
