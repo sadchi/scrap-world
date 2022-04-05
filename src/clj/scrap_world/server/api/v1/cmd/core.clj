@@ -4,12 +4,16 @@
     [ring.middleware.json :refer [wrap-json-response]]
     [ring.util.response :as r]
     [scrap-world.reference.api.v1.cmd :as ref]
-    [scrap-world.server.world.generation.core :as wg]
+    [scrap-world.server.world.generation.primitive-world-generator :as pwg]
+    [clojure.spec.alpha :as s]
+    [clojure.spec.gen.alpha :as gen]
     ))
 
 
 (defn get-all-cmds [req]
-  (r/response {:ok true}))
+  (r/response {:cmds [
+                      (str ::pwg/req)
+                      ]}))
 
 (def routes
   (list
