@@ -4,6 +4,7 @@
     [ring.middleware.json :refer [wrap-json-response]]
     [ring.util.response :as r]
     [scrap-world.reference.api.v1.cmd :as ref]
+    [scrap-world.server.world.generation.core :as wg]
     ))
 
 
