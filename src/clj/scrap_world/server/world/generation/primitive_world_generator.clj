@@ -2,6 +2,8 @@
   (:require
     [clojure.spec.alpha :as s]
     [scrap-world.common-utils :as cu]
+    [scrap-world.server.cmd-specs :as cs]
+    [malli.core :as m]
     ))
 
 
@@ -16,3 +18,5 @@
 
 (s/def ::req (s/keys :req-un [::cmd-name ::width ::length ::height]
                      :opt-un [::seed ::world-id ::zero-level]))
+
+
