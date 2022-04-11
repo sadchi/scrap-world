@@ -7,7 +7,7 @@
                    :x    (* 15 64)
                    :y    (* 10 64)})
 
-(defn get-world-state-by-window [x y width height]
+(defn get-world-state-by-window [x y z width length height]
   (let []
    (if (and (<= x (:x dummy-coord) (+ x width))
             (<= y (:y dummy-coord) (+ y height)))

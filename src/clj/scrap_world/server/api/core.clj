@@ -61,9 +61,9 @@
    ["/swagger.json" {:get {:no-doc  true
                            :swagger {:info {:title       "Scrap-world api"
                                             :description "Some description"}
-                                     ;:tags [{:name "files", :description "file api"}
-                                     ;       {:name "math", :description "math api"}]
-                                     ;
+                                     :tags [{:name "console", :description "Console commands api"}
+                                            {:name "inner", :description "Inner api"}]
+
                                      }
                            :handler (swagger/create-swagger-handler)}}]])
 

@@ -1,6 +1,6 @@
 (ns scrap-world.app.world
   (:require
-    [ajax.core :refer [GET POST]]
+    [ajax.core :as ajax]
     [scrap-world.common.core :as c]
     [scrap-world.reference.api.core :as rc]
     [scrap-world.reference.api.v1.world :as w]
@@ -19,5 +19,6 @@
 
 (defn update-world [params]
   (c/log "update-world params: " params)
-  (GET (rc/generate-uri w/world params c/log) {:handler       got-new-world
-                                               :error-handler failed-new-world}))
+  (ajax/GET w/world {:params params
+                     :handler       got-new-world
+                     :error-handler failed-new-world}))

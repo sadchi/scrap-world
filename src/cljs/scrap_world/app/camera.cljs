@@ -21,10 +21,12 @@
     (eq/dispatch! {:type   :update-world
                    :params {:x      (get-in c-params [:position :x])
                             :y      (get-in c-params [:position :y])
+                            :z      0
                             :width  (-> (get-in c-params [:size-px :width])
                                         (/ tile)
                                         (/ zoom)
                                         (Math/round))
+                            :length 10
                             :height (-> (get-in c-params [:size-px :height])
                                         (/ tile)
                                         (/ zoom)
