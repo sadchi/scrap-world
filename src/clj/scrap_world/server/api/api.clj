@@ -1,4 +1,4 @@
-(ns scrap-world.server.api.core
+(ns scrap-world.server.api.api
   (:require
     [clojure.java.io :as io]
     [clojure.string :as s]

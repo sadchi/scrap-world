@@ -4,7 +4,7 @@
     [clojure.java.io :as io]
     [clojure.tools.cli :as cli]
     [clojure.tools.logging :as log]
-    [scrap-world.server.core :as server]
+    [scrap-world.server.server :as server]
     )
   (:import (java.io FileNotFoundException))
   (:gen-class))
