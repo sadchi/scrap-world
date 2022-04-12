@@ -1,9 +1,10 @@
 (ns scrap-world.server.server
   (:require
+    [clojure.string :as str]
+    [clojure.tools.logging :as log]
     [malli.util :as mu]
     [muuntaja.core :as m]
     [org.httpkit.server :refer [run-server]]
-    [clojure.string :as str]
     [reitit.coercion.malli :as rm]
     [reitit.ring :as ring]
     [reitit.ring.coercion :as coercion]
@@ -15,7 +16,7 @@
     [reitit.swagger-ui :as swagger-ui]
     [scrap-world.server.api.api :as api]
     [scrap-world.server.api.v1.world :as w]
-    [clojure.tools.logging :as log]))
+    ))
 
 (defn handler [e request]
   (let [exception-type (str (.getName (.getClass e)))
