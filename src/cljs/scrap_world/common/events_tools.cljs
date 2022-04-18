@@ -1,5 +1,4 @@
-(ns scrap-world.common.events-tools
-  )
+(ns scrap-world.common.events-tools)
 
 (defn debounce
   ([f] (debounce f 1000))

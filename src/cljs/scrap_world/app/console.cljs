@@ -4,9 +4,7 @@
     [cljs-time.format :as tf]
     [garden.units :as g]
     [instaparse.core :as insta]
-    [instaparse.failure :as fail]
     [reagent.core :as r]
-    [reagent.dom :as rd]
     [scrap-world.common.common-styles :as cs]
     [scrap-world.common.core :as c]
     [scrap-world.common.inputs :as i]
@@ -26,7 +24,7 @@
 (defn v [& k]
   (get-in params k))
 
-(def g "
+(def gr "
 res             = per-cmd-help | generic-help | cmd | refresh
 refresh         = <'refresh'>
 generic-help    = <help-w>
@@ -41,7 +39,7 @@ str-val         = <'\"'> #'[^\"]*' <'\"'>
 <help-w>        = 'help'
 ")
 
-(defonce parser (insta/parser g))
+(defonce parser (insta/parser gr))
 
 
 
