@@ -5,14 +5,16 @@
 
 (def gr "
 tree       = <'['> <op-sp> split-type <sp> children <op-sp> <']'>
-children   = (tree | node) (<sp> tree|node)*
-node       = <'['> <op-sp> <':'> cmp-name <']'>
+children   = (<op-sp> child)*
+<child>    = tree|node
+node       = <'['> <op-sp> <':'> cmp-name <op-sp> size <']'>
+size       = (#'[0-9]+' ('px'|'%')) | '*'
 op-sp      = ' '*
-sp         = ' '+
+sp         = ' '+|newline+
 split-type = ':h'|':v'
-cmp-name   = #'[a-zA-Z0-9_-]'
+cmp-name   = #'[a-zA-Z0-9_-]+'
+newline    = #'\n'
 ")
 
 (def parser (insta/parser gr))
 
-(def parsed (parser "[:h ]"))
